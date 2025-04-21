@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Status Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .car-image {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            background-color: black;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-2xl p-6">
+        <!-- Tombol Capture and Predict -->
+        <div class="mb-4 text-center">
+            <button id="capture-predict-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Capture and Predict
+            </button>
+        </div>
+
+        <!-- Current Car State -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Current car state:</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <img id="car-left" src="" alt="Car Left View" class="car-image">
+                <img id="car-right" src="" alt="Car Right View" class="car-image">
+            </div>
+        </div>
+
+        <!-- AI Real-Time Detected State -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-lg font-semibold mb-4 text-center">AI real-time detected state:</h2>
+            <h3 class="text-md font-medium mb-2 text-center">Car Status</h3>
+            <div id="status-container" class="space-y-2">
+                <div class="flex justify-between p-2 border-b">
+                    <span class="font-medium">Front Right</span>
+                    <span id="door_front_right" class="text-red-500">Closed</span>
+                </div>
+                <div class="flex justify-between p-2 border-b">
+                    <span class="font-medium">Front Left</span>
+                    <span id="door_front_left" class="text-red-500">Closed</span>
+                </div>
+                <div class="flex justify-between p-2 border-b">
+                    <span class="font-medium">Rear Right</span>
+                    <span id="door_rear_right" class="text-red-500">Closed</span>
+                </div>
+                <div class="flex justify-between p-2 border-b">
+                    <span class="font-medium">Rear Left</span>
+                    <span id="door_rear_left" class="text-red-500">Closed</span>
+                </div>
+                <div class="flex justify-between p-2 border-b">
+                    <span class="font-medium">Hood</span>
+                    <span id="hood" class="text-red-500">Closed</span>
+                </div>
+            </div>
+            <div id="error-message" class="text-red-500 text-center mt-4 hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        const capturePredictBtn = document.getElementById('capture-predict-btn');
+        const errorMessageDiv = document.getElementById('error-message');
+
+        // Fungsi untuk memperbarui status dan gambar
+        async function updateStatus() {
+            try {
+                const response = await fetch('http://localhost:5000/status');
+                const data = await response.json();
+
+                // Cek jika ada error
+                if (data.error) {
+                    errorMessageDiv.textContent = `Error: ${data.error}`;
+                    errorMessageDiv.classList.remove('hidden');
+                    return;
+                }
+
+                // Sembunyikan pesan error jika berhasil
+                errorMessageDiv.textContent = '';
+                errorMessageDiv.classList.add('hidden');
+
+                // Perbarui status
+                document.getElementById('door_front_left').textContent = data.status.door_front_left;
+                document.getElementById('door_front_left').className = data.status.door_front_left === 'open' ? 'text-green-500' : 'text-red-500';
+                
+                document.getElementById('door_front_right').textContent = data.status.door_front_right;
+                document.getElementById('door_front_right').className = data.status.door_front_right === 'open' ? 'text-green-500' : 'text-red-500';
+                
+                document.getElementById('door_rear_left').textContent = data.status.door_rear_left;
+                document.getElementById('door_rear_left').className = data.status.door_rear_left === 'open' ? 'text-green-500' : 'text-red-500';
+                
+                document.getElementById('door_rear_right').textContent = data.status.door_rear_right;
+                document.getElementById('door_rear_right').className = data.status.door_rear_right === 'open' ? 'text-green-500' : 'text-red-500';
+                
+                document.getElementById('hood').textContent = data.status.hood;
+                document.getElementById('hood').className = data.status.hood === 'open' ? 'text-green-500' : 'text-red-500';
+
+                // Perbarui gambar
+                document.getElementById('car-left').src = `data:image/png;base64,${data.images.left}`;
+                document.getElementById('car-right').src = `data:image/png;base64,${data.images.right}`;
+            } catch (error) {
+                console.error('Error fetching status:', error);
+                errorMessageDiv.textContent = `Error: Failed to fetch status`;
+                errorMessageDiv.classList.remove('hidden');
+            }
+        }
+
+        // Event listener untuk tombol Capture and Predict
+        capturePredictBtn.addEventListener('click', () => {
+            updateStatus();
+        });
+    </script>
+</body>
+</html>
